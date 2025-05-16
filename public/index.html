@@ -7,271 +7,608 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script defer src="videoConference.js"></script>
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+      .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .scale-in {
+        animation: scaleIn 0.3s ease-in-out;
+      }
+      
+      @keyframes scaleIn {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      
+      .pulse {
+        animation: pulse 2s infinite;
+      }
+      
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
+        70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+      }
+      
+      .slide-up {
+        animation: slideUp 0.4s ease-out;
+      }
+      
+      @keyframes slideUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      
+      .avatar {
+        transition: all 0.3s ease;
+      }
+      
+      .avatar:hover {
+        transform: scale(1.05);
+      }
+      
+      .btn-hover {
+        transition: all 0.2s ease;
+      }
+      
+      .btn-hover:hover {
+        transform: translateY(-2px);
+      }
+      
+      .chat-message {
+        transition: all 0.3s ease;
+      }
+      
+      .chat-message:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+      
+      .ripple {
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .ripple:after {
+        content: "";
+        display: block;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+        background-repeat: no-repeat;
+        background-position: 50%;
+        transform: scale(10, 10);
+        opacity: 0;
+        transition: transform .5s, opacity 1s;
+      }
+      
+      .ripple:active:after {
+        transform: scale(0, 0);
+        opacity: .3;
+        transition: 0s;
+      }
+      
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+      }
+    </style>
   </head>
   <body class="bg-gray-900 text-white min-h-screen flex flex-col">
     <!-- Landing Controls -->
-    <div id="landing-controls" class="flex flex-col items-center justify-center h-screen space-y-4">
-      <h1 class="text-2xl font-bold mb-4">Join Video Conference</h1>
-      <input id="roomInput" type="text" placeholder="Enter Room ID" class="px-4 py-2 rounded bg-gray-800 border border-gray-700 w-64 text-white" />
-      <div class="space-x-4">
-        <button onclick="createRoom()" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded">Create Room</button>
-        <button onclick="joinRoom()" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded">Join Room</button>
+    <div id="landing-controls" class="flex flex-col items-center justify-center h-screen space-y-6 fade-in">
+      <div class="scale-in flex flex-col items-center mb-6">
+        <i class="fas fa-video text-blue-500 text-5xl mb-4"></i>
+        <h1 class="text-3xl font-bold">Modern Video Conference</h1>
+        <p class="text-gray-400 mt-2">Connect with anyone, anywhere</p>
+      </div>
+      
+      <div class="bg-gray-800 p-8 rounded-xl shadow-lg w-96 flex flex-col items-center space-y-6 scale-in">
+        <input id="roomInput" type="text" placeholder="Enter Room ID" class="px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 w-full text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+        
+        <div class="flex space-x-4 w-full">
+          <button onclick="createRoom()" class="ripple btn-hover bg-blue-500 hover:bg-blue-600 flex-1 py-3 rounded-lg flex items-center justify-center space-x-2 transition-all shadow-lg">
+            <i class="fas fa-plus-circle"></i>
+            <span>Create Room</span>
+          </button>
+          <button onclick="joinRoom()" class="ripple btn-hover bg-green-500 hover:bg-green-600 flex-1 py-3 rounded-lg flex items-center justify-center space-x-2 transition-all shadow-lg">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Join Room</span>
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- Main Conference Interface -->
     <div id="conference-interface" class="hidden h-screen flex flex-col">
       <!-- Header -->
-      <header class="bg-gray-800 p-4 flex justify-between items-center shadow-md">
-        <div class="text-lg font-semibold">Room: <span id="currentRoom">None</span></div>
-        <button onclick="leaveRoom()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">Leave</button>
+      <header class="bg-gray-800 p-4 flex justify-between items-center shadow-lg border-b border-gray-700">
+        <div class="flex items-center space-x-3">
+          <i class="fas fa-video text-blue-500 text-xl"></i>
+          <div>
+            <h1 class="text-lg font-semibold">Meeting Room</h1>
+            <div class="text-sm text-gray-400">ID: <span id="currentRoom">None</span></div>
+          </div>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+          <div class="bg-gray-700 rounded-lg px-3 py-1 flex items-center">
+            <i class="fas fa-clock text-gray-400 mr-2"></i>
+            <span id="meeting-timer" class="text-gray-300">00:00:00</span>
+          </div>
+          <button onclick="leaveRoom()" class="ripple btn-hover bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg flex items-center space-x-2 transition-all">
+            <i class="fas fa-phone-slash"></i>
+            <span>End Call</span>
+          </button>
+        </div>
       </header>
 
       <!-- Main Content -->
-      <div class="flex-1 flex">
+      <div class="flex-1 flex overflow-hidden">
         <!-- Main Video Area -->
-        <div class="flex-1 p-4">
-          <div id="video-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 p-2">
+        <div class="flex-1 p-4 overflow-y-auto">
+          <div id="video-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 p-2">
             <!-- Video cards will be added here -->
           </div>
         </div>
 
         <!-- Sidebar -->
-        <div class="w-80 bg-gray-800 flex flex-col">
+        <div class="w-80 bg-gray-800 flex flex-col border-l border-gray-700 slide-up">
+          <!-- Tabs -->
+          <div class="flex border-b border-gray-700">
+            <button id="participants-tab" class="flex-1 py-3 px-4 text-blue-400 border-b-2 border-blue-500 font-medium">
+              <i class="fas fa-users mr-2"></i>Participants
+            </button>
+            <button id="chat-tab" class="flex-1 py-3 px-4 text-gray-400 hover:text-gray-200 transition-colors">
+              <i class="fas fa-comments mr-2"></i>Chat
+            </button>
+          </div>
+          
           <!-- Participants List -->
-          <div class="flex-1 p-4 border-b border-gray-700">
-            <h2 class="text-lg font-semibold mb-4">Participants</h2>
-            <div id="participants-list" class="space-y-2">
+          <div id="participants-panel" class="flex-1 p-4 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-semibold">Participants</h2>
+              <span id="participant-count" class="bg-blue-500 text-xs font-bold px-2 py-1 rounded-full">1</span>
+            </div>
+            <div id="participants-list" class="space-y-3">
               <!-- Participants will be added here -->
             </div>
           </div>
 
           <!-- Chat Panel -->
-          <div class="flex-1 flex flex-col p-4">
-            <h2 class="text-lg font-semibold mb-4">Chat</h2>
-            <div id="chat-messages" class="flex-1 overflow-y-auto space-y-2 mb-4">
+          <div id="chat-panel" class="hidden flex-1 flex flex-col p-4">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-semibold">Meeting Chat</h2>
+              <button id="chat-options" class="text-gray-400 hover:text-white">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+            </div>
+            <div id="chat-messages" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
               <!-- Chat messages will be added here -->
             </div>
-            <div class="flex space-x-2">
-              <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-3 py-2 rounded bg-gray-700 text-white" />
-              <button onclick="sendMessage()" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded">Send</button>
+            <div class="flex space-x-2 items-center">
+              <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-3 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all" />
+              <button onclick="sendMessage()" class="ripple btn-hover bg-blue-500 hover:bg-blue-600 p-2 rounded-lg transition-all">
+                <i class="fas fa-paper-plane"></i>
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Controls -->
-      <div class="bg-gray-800 p-4 flex justify-center space-x-4">
-        <button onclick="toggleMic()" class="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-full flex items-center space-x-2">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
-          </svg>
-          <span>Mic</span>
+      <div class="bg-gray-800 p-4 flex justify-center items-center space-x-4 border-t border-gray-700">
+        <button id="mic-btn" onclick="toggleMic()" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
+          <i class="fas fa-microphone text-xl"></i>
         </button>
-        <button onclick="toggleCamera()" class="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-full flex items-center space-x-2">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-          </svg>
-          <span>Camera</span>
+        <button id="camera-btn" onclick="toggleCamera()" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
+          <i class="fas fa-video text-xl"></i>
+        </button>
+        <button id="screen-btn" onclick="toggleScreenShare()" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
+          <i class="fas fa-desktop text-xl"></i>
+        </button>
+        <button id="settings-btn" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
+          <i class="fas fa-cog text-xl"></i>
+        </button>
+        <button id="more-btn" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
+          <i class="fas fa-ellipsis-h text-xl"></i>
         </button>
       </div>
     </div>
+
     <script>
       const socket = io();
-let localStream;
-let peers = {};
-let userMapping = {};
-let currentRoom = '';
-let micEnabled = true;
-let cameraEnabled = true;
+      let localStream;
+      let peers = {};
+      let userMapping = {};
+      let currentRoom = '';
+      let micEnabled = true;
+      let cameraEnabled = true;
+      let startTime;
+      let timerInterval;
 
-// Show/hide interfaces
-function showConferenceInterface(show) {
-  document.getElementById('landing-controls').style.display = show ? 'none' : 'flex';
-  document.getElementById('conference-interface').style.display = show ? 'flex' : 'none';
-}
+      // Tab switching
+      document.getElementById('participants-tab').addEventListener('click', function() {
+        document.getElementById('participants-tab').classList.add('text-blue-400', 'border-b-2', 'border-blue-500');
+        document.getElementById('participants-tab').classList.remove('text-gray-400');
+        document.getElementById('chat-tab').classList.add('text-gray-400');
+        document.getElementById('chat-tab').classList.remove('text-blue-400', 'border-b-2', 'border-blue-500');
+        document.getElementById('participants-panel').classList.remove('hidden');
+        document.getElementById('chat-panel').classList.add('hidden');
+      });
 
-// Chat functionality
-function sendMessage() {
-  const input = document.getElementById('chat-input');
-  const message = input.value.trim();
-  if (message) {
-    socket.emit('chat-message', { room: currentRoom, message });
-    addChatMessage('You', message);
-    input.value = '';
-  }
-}
+      document.getElementById('chat-tab').addEventListener('click', function() {
+        document.getElementById('chat-tab').classList.add('text-blue-400', 'border-b-2', 'border-blue-500');
+        document.getElementById('chat-tab').classList.remove('text-gray-400');
+        document.getElementById('participants-tab').classList.add('text-gray-400');
+        document.getElementById('participants-tab').classList.remove('text-blue-400', 'border-b-2', 'border-blue-500');
+        document.getElementById('chat-panel').classList.remove('hidden');
+        document.getElementById('participants-panel').classList.add('hidden');
+      });
 
-function addChatMessage(sender, message) {
-  const chatMessages = document.getElementById('chat-messages');
-  const messageDiv = document.createElement('div');
-  messageDiv.className = 'bg-gray-700 rounded p-2';
-  messageDiv.innerHTML = `
-    <div class="font-semibold">${sender}</div>
-    <div>${message}</div>
-  `;
-  chatMessages.appendChild(messageDiv);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
+      // Chat input - send message on Enter
+      document.getElementById('chat-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          sendMessage();
+        }
+      });
 
-// Participant list management
-function updateParticipantsList() {
-  const list = document.getElementById('participants-list');
-  list.innerHTML = '';
-  
-  // Add local user
-  const localUser = document.createElement('div');
-  localUser.className = 'flex items-center space-x-2';
-  localUser.innerHTML = `
-    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-    <div>You (Host)</div>
-  `;
-  list.appendChild(localUser);
-  
-  // Add remote users
-  Object.keys(peers).forEach(userID => {
-    const userDiv = document.createElement('div');
-    userDiv.className = 'flex items-center space-x-2';
-    userDiv.innerHTML = `
-      <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-      <div>Participant ${userID.slice(0, 4)}</div>
-    `;
-    list.appendChild(userDiv);
-  });
-}
+      // Meeting timer
+      function startTimer() {
+        startTime = new Date();
+        timerInterval = setInterval(updateTimer, 1000);
+      }
 
-// Get media and show local video
-async function getMedia() {
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    displayVideo(localStream, 'You');
-  } catch (err) {
-    console.error('Error accessing camera/mic:', err);
-    alert("Please allow camera and microphone access.");
-  }
-}
+      function updateTimer() {
+        const now = new Date();
+        const diff = now - startTime;
+        const hours = Math.floor(diff / 3600000).toString().padStart(2, '0');
+        const minutes = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+        const seconds = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+        document.getElementById('meeting-timer').textContent = `${hours}:${minutes}:${seconds}`;
+      }
 
-function displayVideo(stream, username, id = '') {
-  const container = document.getElementById('video-container');
-  const div = document.createElement('div');
-  div.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-lg p-2 hover:shadow-xl hover:scale-[1.02] transition-all duration-200';
-  div.id = `card-${id}`;
-  div.innerHTML = `
-    <div class="aspect-video">
-      <video id="video-${id}" autoplay ${id === '' ? 'muted' : ''} class="rounded w-full h-full object-cover"></video>
-    </div>
-    <div class="text-center mt-1 text-xs truncate px-1">${username}</div>
-  `;
-  const video = div.querySelector('video');
-  video.srcObject = stream;
-  container.appendChild(div);
-}
+      function stopTimer() {
+        clearInterval(timerInterval);
+      }
 
-// Room handling
-function createRoom() {
-  const roomID = document.getElementById('roomInput').value.trim();
-  if (roomID) {
-    socket.emit('create-room', roomID);
-  }
-}
-function joinRoom() {
-  const roomID = document.getElementById('roomInput').value.trim();
-  if (roomID) {
-    socket.emit('join-room', roomID);
-  }
-}
-function updateCurrentRoom(roomID) {
-  currentRoom = roomID;
-  document.getElementById('currentRoom').textContent = roomID;
-  showConferenceInterface(roomID !== 'None');
-  updateParticipantsList();
-}
-function leaveRoom() {
-  // Cleanup peers
-  Object.values(peers).forEach(peer => peer.destroy());
-  peers = {};
-  userMapping = {};
+      // Show/hide interfaces
+      function showConferenceInterface(show) {
+        document.getElementById('landing-controls').style.display = show ? 'none' : 'flex';
+        document.getElementById('conference-interface').style.display = show ? 'flex' : 'none';
+        if (show) {
+          startTimer();
+        } else {
+          stopTimer();
+        }
+      }
 
-  // Remove all video cards except local
-  const container = document.getElementById('video-container');
-  container.innerHTML = '';
-  displayVideo(localStream, 'You');
+      // Chat functionality
+      function sendMessage() {
+        const input = document.getElementById('chat-input');
+        const message = input.value.trim();
+        if (message) {
+          socket.emit('chat-message', { room: currentRoom, message });
+          addChatMessage('You', message);
+          input.value = '';
+        }
+      }
 
-  socket.emit('leave-room', currentRoom);
-  updateCurrentRoom('None');
-}
+      function addChatMessage(sender, message) {
+        const chatMessages = document.getElementById('chat-messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'chat-message bg-gray-700 rounded-lg p-3 fade-in';
+        
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        messageDiv.innerHTML = `
+          <div class="flex justify-between items-center mb-1">
+            <div class="font-medium text-sm ${sender === 'You' ? 'text-blue-400' : 'text-gray-300'}">${sender}</div>
+            <div class="text-xs text-gray-500">${timestamp}</div>
+          </div>
+          <div class="text-sm">${message}</div>
+        `;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Highlight chat tab if not active
+        if (document.getElementById('chat-panel').classList.contains('hidden')) {
+          document.getElementById('chat-tab').classList.add('text-yellow-400', 'pulse');
+          setTimeout(() => {
+            document.getElementById('chat-tab').classList.remove('pulse');
+          }, 2000);
+        }
+      }
 
-// Media toggle
-function toggleMic() {
-  micEnabled = !micEnabled;
-  localStream.getAudioTracks().forEach(track => (track.enabled = micEnabled));
-}
-function toggleCamera() {
-  cameraEnabled = !cameraEnabled;
-  localStream.getVideoTracks().forEach(track => (track.enabled = cameraEnabled));
-}
+      // Participant list management
+      function updateParticipantsList() {
+        const list = document.getElementById('participants-list');
+        list.innerHTML = '';
+        
+        // Add local user
+        const localUser = document.createElement('div');
+        localUser.className = 'flex items-center justify-between p-2 hover:bg-gray-700 rounded-lg';
+        localUser.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <div class="avatar w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-lg font-bold">
+              Y
+            </div>
+            <div>
+              <div class="font-medium">You (Host)</div>
+              <div class="text-xs text-gray-400">Local participant</div>
+            </div>
+          </div>
+          <div class="flex space-x-2">
+            <button class="text-gray-400 hover:text-white" title="More options">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
+          </div>
+        `;
+        list.appendChild(localUser);
+        
+        // Add remote users
+        Object.keys(peers).forEach(userID => {
+          const initials = userID.slice(0, 1).toUpperCase();
+          const userDiv = document.createElement('div');
+          userDiv.className = 'flex items-center justify-between p-2 hover:bg-gray-700 rounded-lg fade-in';
+          userDiv.innerHTML = `
+            <div class="flex items-center space-x-3">
+              <div class="avatar w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-lg font-bold">
+                ${initials}
+              </div>
+              <div>
+                <div class="font-medium">Participant ${userID.slice(0, 4)}</div>
+                <div class="text-xs text-gray-400">Remote participant</div>
+              </div>
+            </div>
+            <div class="flex space-x-2">
+              <button class="text-gray-400 hover:text-white" title="More options">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+            </div>
+          `;
+          list.appendChild(userDiv);
+        });
+        
+        // Update participant count
+        document.getElementById('participant-count').textContent = Object.keys(peers).length + 1;
+      }
 
-// Socket listeners
-socket.on('room-created', (roomID) => {
-  updateCurrentRoom(roomID);
-});
-socket.on('room-joined', (roomID) => {
-  updateCurrentRoom(roomID);
-});
-socket.on('user-joined', (userID) => {
-  userMapping[userID] = userID;
-  connectToPeer(userID, true);
-  updateParticipantsList();
-  addChatMessage('System', 'A new participant has joined the room');
-});
-socket.on('existing-users', (users) => {
-  users.forEach(userID => connectToPeer(userID, false));
-});
-socket.on('signal', ({ signalData, sourceID }) => {
-  if (peers[sourceID]) {
-    peers[sourceID].signal(signalData);
-  }
-});
-socket.on('user-left', (userID) => {
-  if (peers[userID]) {
-    peers[userID].destroy();
-    delete peers[userID];
-  }
-  const div = document.getElementById(`card-${userID}`);
-  if (div) div.remove();
-  updateParticipantsList();
-  addChatMessage('System', 'A participant has left the room');
-});
+      // Get media and show local video
+      async function getMedia() {
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+          displayVideo(localStream, 'You');
+        } catch (err) {
+          console.error('Error accessing camera/mic:', err);
+          alert("Please allow camera and microphone access.");
+        }
+      }
 
-// Chat message handler
-socket.on('chat-message', ({ sender, message }) => {
-  addChatMessage(sender, message);
-});
+      function displayVideo(stream, username, id = '') {
+        const container = document.getElementById('video-container');
+        const div = document.createElement('div');
+        div.className = 'scale-in bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300';
+        div.id = `card-${id}`;
+        
+        // Create a random color for the user avatar if the video fails
+        const colors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        const initials = username.slice(0, 1).toUpperCase();
+        
+        div.innerHTML = `
+          <div class="relative">
+            <video id="video-${id}" autoplay ${id === '' ? 'muted' : ''} class="w-full h-full object-cover aspect-video bg-gray-900"></video>
+            <div class="absolute bottom-0 left-0 right-0 flex justify-between items-center p-3 bg-gradient-to-t from-black/80 to-transparent">
+              <div class="flex items-center space-x-2">
+                <div class="avatar w-8 h-8 ${randomColor} rounded-full flex items-center justify-center font-bold text-sm">
+                  ${initials}
+                </div>
+                <span class="font-medium text-sm">${username}</span>
+              </div>
+              <div class="flex space-x-2">
+                ${id === '' ? `
+                  <span class="bg-blue-500 text-xs px-2 py-1 rounded-full">You</span>
+                ` : ''}
+                <i class="${id === '' ? micEnabled : 'true'} ? 'fas fa-microphone text-green-400' : 'fas fa-microphone-slash text-red-400'"></i>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        const video = div.querySelector('video');
+        video.srcObject = stream;
+        video.addEventListener('loadedmetadata', () => {
+          video.play();
+        });
+        
+        container.appendChild(div);
+      }
 
-// Peer connection
-function connectToPeer(targetID, initiator = false) {
-  const peer = new SimplePeer({
-    initiator,
-    trickle: false,
-    stream: localStream
-  });
+      // Room handling
+      function createRoom() {
+        const roomID = document.getElementById('roomInput').value.trim() || generateRoomId();
+        if (roomID) {
+          socket.emit('create-room', roomID);
+        }
+      }
+      
+      function generateRoomId() {
+        return Math.random().toString(36).substring(2, 8);
+      }
+      
+      function joinRoom() {
+        const roomID = document.getElementById('roomInput').value.trim();
+        if (roomID) {
+          socket.emit('join-room', roomID);
+        }
+      }
+      
+      function updateCurrentRoom(roomID) {
+        currentRoom = roomID;
+        document.getElementById('currentRoom').textContent = roomID;
+        showConferenceInterface(roomID !== 'None');
+        updateParticipantsList();
+      }
+      
+      function leaveRoom() {
+        // Show confirmation dialog
+        if (confirm("Are you sure you want to leave this meeting?")) {
+          // Cleanup peers
+          Object.values(peers).forEach(peer => peer.destroy());
+          peers = {};
+          userMapping = {};
 
-  peer.on('signal', signalData => {
-    socket.emit('signal', { signalData, targetID });
-  });
+          // Remove all video cards except local
+          const container = document.getElementById('video-container');
+          container.innerHTML = '';
+          
+          // Reset chat
+          document.getElementById('chat-messages').innerHTML = '';
+          
+          socket.emit('leave-room', currentRoom);
+          updateCurrentRoom('None');
+        }
+      }
 
-  peer.on('stream', stream => {
-    displayVideo(stream, targetID, targetID);
-  });
+      // Media toggle
+      function toggleMic() {
+        micEnabled = !micEnabled;
+        localStream.getAudioTracks().forEach(track => (track.enabled = micEnabled));
+        
+        const micBtn = document.getElementById('mic-btn');
+        if (micEnabled) {
+          micBtn.innerHTML = '<i class="fas fa-microphone text-xl"></i>';
+          micBtn.classList.remove('bg-red-500');
+          micBtn.classList.add('bg-gray-700');
+        } else {
+          micBtn.innerHTML = '<i class="fas fa-microphone-slash text-xl"></i>';
+          micBtn.classList.remove('bg-gray-700');
+          micBtn.classList.add('bg-red-500');
+        }
+      }
+      
+      function toggleCamera() {
+        cameraEnabled = !cameraEnabled;
+        localStream.getVideoTracks().forEach(track => (track.enabled = cameraEnabled));
+        
+        const cameraBtn = document.getElementById('camera-btn');
+        if (cameraEnabled) {
+          cameraBtn.innerHTML = '<i class="fas fa-video text-xl"></i>';
+          cameraBtn.classList.remove('bg-red-500');
+          cameraBtn.classList.add('bg-gray-700');
+        } else {
+          cameraBtn.innerHTML = '<i class="fas fa-video-slash text-xl"></i>';
+          cameraBtn.classList.remove('bg-gray-700');
+          cameraBtn.classList.add('bg-red-500');
+        }
+      }
+      
+      // Screen sharing (placeholder - would need additional implementation)
+      function toggleScreenShare() {
+        alert("Screen sharing feature coming soon!");
+      }
 
-  peers[targetID] = peer;
-}
+      // Socket listeners
+      socket.on('room-created', (roomID) => {
+        updateCurrentRoom(roomID);
+        addChatMessage('System', 'You created the room. Share the room ID with others to join.');
+      });
+      
+      socket.on('room-joined', (roomID) => {
+        updateCurrentRoom(roomID);
+        addChatMessage('System', 'You joined the room.');
+      });
+      
+      socket.on('user-joined', (userID) => {
+        userMapping[userID] = userID;
+        connectToPeer(userID, true);
+        updateParticipantsList();
+        addChatMessage('System', 'A new participant has joined the room');
+      });
+      
+      socket.on('existing-users', (users) => {
+        users.forEach(userID => connectToPeer(userID, false));
+      });
+      
+      socket.on('signal', ({ signalData, sourceID }) => {
+        if (peers[sourceID]) {
+          peers[sourceID].signal(signalData);
+        }
+      });
+      
+      socket.on('user-left', (userID) => {
+        if (peers[userID]) {
+          peers[userID].destroy();
+          delete peers[userID];
+        }
+        const div = document.getElementById(`card-${userID}`);
+        if (div) div.remove();
+        updateParticipantsList();
+        addChatMessage('System', 'A participant has left the room');
+      });
 
-// Start local video
-window.addEventListener("load", getMedia);
+      // Chat message handler
+      socket.on('chat-message', ({ sender, message }) => {
+        addChatMessage(sender, message);
+      });
 
+      // Peer connection
+      function connectToPeer(targetID, initiator = false) {
+        const peer = new SimplePeer({
+          initiator,
+          trickle: false,
+          stream: localStream
+        });
+
+        peer.on('signal', signalData => {
+          socket.emit('signal', { signalData, targetID });
+        });
+
+        peer.on('stream', stream => {
+          displayVideo(stream, `Participant ${targetID.slice(0, 4)}`, targetID);
+        });
+
+        peers[targetID] = peer;
+      }
+
+      // Room input validation & keypress
+      document.getElementById('roomInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          if (this.value.trim()) {
+            joinRoom();
+          } else {
+            createRoom();
+          }
+        }
+      });
+
+      // Start local video
+      window.addEventListener("load", getMedia);
     </script>
   </body>
 </html>
