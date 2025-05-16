@@ -2,6 +2,9 @@ const socket = io();
 let localStream;
 let peers = {};
 let userMapping = {};
+let currentRoom = '';
+let micEnabled = true;
+let cameraEnabled = true;
 
 // Get media and show local video
 async function getMedia() {
@@ -10,17 +13,18 @@ async function getMedia() {
     displayVideo(localStream, 'You');
   } catch (err) {
     console.error('Error accessing camera/mic:', err);
+    alert("Please allow camera and microphone access.");
   }
 }
 
 function displayVideo(stream, username, id = '') {
   const container = document.getElementById('video-container');
   const div = document.createElement('div');
-  div.className = 'card';
+  div.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-lg p-2';
   div.id = `card-${id}`;
   div.innerHTML = `
-    <video id="video-${id}" autoplay ${id === '' ? 'muted' : ''}></video>
-    <div>${username}</div>
+    <video id="video-${id}" autoplay ${id === '' ? 'muted' : ''} class="rounded w-full"></video>
+    <div class="text-center mt-2 text-sm">${username}</div>
   `;
   const video = div.querySelector('video');
   video.srcObject = stream;
@@ -29,15 +33,44 @@ function displayVideo(stream, username, id = '') {
 
 // Room handling
 function createRoom() {
-  const roomID = prompt("Room ID to create:");
-  if (roomID) socket.emit('create-room', roomID);
+  const roomID = document.getElementById('roomInput').value.trim();
+  if (roomID) {
+    socket.emit('create-room', roomID);
+  }
 }
 function joinRoom() {
-  const roomID = prompt("Room ID to join:");
-  if (roomID) socket.emit('join-room', roomID);
+  const roomID = document.getElementById('roomInput').value.trim();
+  if (roomID) {
+    socket.emit('join-room', roomID);
+  }
 }
 function updateCurrentRoom(roomID) {
+  currentRoom = roomID;
   document.getElementById('currentRoom').textContent = roomID;
+}
+function leaveRoom() {
+  // Cleanup peers
+  Object.values(peers).forEach(peer => peer.destroy());
+  peers = {};
+  userMapping = {};
+
+  // Remove all video cards except local
+  const container = document.getElementById('video-container');
+  container.innerHTML = '';
+  displayVideo(localStream, 'You');
+
+  socket.emit('leave-room', currentRoom);
+  updateCurrentRoom('None');
+}
+
+// Media toggle
+function toggleMic() {
+  micEnabled = !micEnabled;
+  localStream.getAudioTracks().forEach(track => (track.enabled = micEnabled));
+}
+function toggleCamera() {
+  cameraEnabled = !cameraEnabled;
+  localStream.getVideoTracks().forEach(track => (track.enabled = cameraEnabled));
 }
 
 // Socket listeners

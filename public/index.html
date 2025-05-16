@@ -1,21 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Video Conference</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="controls">
-    <button onclick="createRoom()">Create Room</button>
-    <button onclick="joinRoom()">Join Room</button>
-    <span id="currentRoom">No Room</span>
-  </div>
-  <div id="video-container" class="row"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modern Video Conference</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="videoConference.js"></script>
+  </head>
+  <body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-gray-800 p-4 flex justify-between items-center shadow-md">
+      <div class="text-lg font-semibold">Room: <span id="currentRoom">None</span></div>
+      <button onclick="leaveRoom()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">Leave</button>
+    </header>
 
-  <script src="https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js"></script>
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="videoConference.js"></script>
-</body>
+    <!-- Landing Controls -->
+    <div class="flex flex-col items-center mt-10 space-y-4">
+      <input id="roomInput" type="text" placeholder="Enter Room ID" class="px-4 py-2 rounded bg-gray-800 border border-gray-700 w-64 text-white" />
+      <div class="space-x-4">
+        <button onclick="createRoom()" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded">Create Room</button>
+        <button onclick="joinRoom()" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded">Join Room</button>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex justify-center mt-6 space-x-4">
+      <button onclick="toggleMic()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">Toggle Mic</button>
+      <button onclick="toggleCamera()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">Toggle Camera</button>
+    </div>
+
+    <!-- Video Container -->
+    <div id="video-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-6 justify-center">
+      <!-- Video cards will be added here -->
+    </div>
+  </body>
 </html>
