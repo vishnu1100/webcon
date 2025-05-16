@@ -16,14 +16,20 @@ io.on('connection', (socket) => {
   socket.on('create-room', (roomID) => {
     socket.join(roomID);
     socket.emit('room-created', roomID);
+    socket.room = roomID;
   });
 
   socket.on('join-room', (roomID) => {
     socket.join(roomID);
+    socket.room = roomID;
     const users = [...io.sockets.adapter.rooms.get(roomID) || []].filter(id => id !== socket.id);
     socket.emit('existing-users', users);
     socket.to(roomID).emit('user-joined', socket.id);
     socket.emit('room-joined', roomID);
+  });
+
+  socket.on('chat-message', ({ room, message }) => {
+    socket.to(room).emit('chat-message', { sender: socket.id.slice(0, 4), message });
   });
 
   socket.on('signal', ({ signalData, targetID }) => {

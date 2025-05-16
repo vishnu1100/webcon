@@ -10,14 +10,9 @@
     <script defer src="videoConference.js"></script>
   </head>
   <body class="bg-gray-900 text-white min-h-screen flex flex-col">
-    <!-- Header -->
-    <header class="bg-gray-800 p-4 flex justify-between items-center shadow-md">
-      <div class="text-lg font-semibold">Room: <span id="currentRoom">None</span></div>
-      <button onclick="leaveRoom()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">Leave</button>
-    </header>
-
     <!-- Landing Controls -->
-    <div class="flex flex-col items-center mt-10 space-y-4">
+    <div id="landing-controls" class="flex flex-col items-center justify-center h-screen space-y-4">
+      <h1 class="text-2xl font-bold mb-4">Join Video Conference</h1>
       <input id="roomInput" type="text" placeholder="Enter Room ID" class="px-4 py-2 rounded bg-gray-800 border border-gray-700 w-64 text-white" />
       <div class="space-x-4">
         <button onclick="createRoom()" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded">Create Room</button>
@@ -25,15 +20,62 @@
       </div>
     </div>
 
-    <!-- Controls -->
-    <div class="flex justify-center mt-6 space-x-4">
-      <button onclick="toggleMic()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">Toggle Mic</button>
-      <button onclick="toggleCamera()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded">Toggle Camera</button>
-    </div>
+    <!-- Main Conference Interface -->
+    <div id="conference-interface" class="hidden h-screen flex flex-col">
+      <!-- Header -->
+      <header class="bg-gray-800 p-4 flex justify-between items-center shadow-md">
+        <div class="text-lg font-semibold">Room: <span id="currentRoom">None</span></div>
+        <button onclick="leaveRoom()" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">Leave</button>
+      </header>
 
-    <!-- Video Container -->
-    <div id="video-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-6 justify-center">
-      <!-- Video cards will be added here -->
+      <!-- Main Content -->
+      <div class="flex-1 flex">
+        <!-- Main Video Area -->
+        <div class="flex-1 p-4">
+          <div id="video-container" class="grid grid-cols-1 gap-4 h-full">
+            <!-- Video cards will be added here -->
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="w-80 bg-gray-800 flex flex-col">
+          <!-- Participants List -->
+          <div class="flex-1 p-4 border-b border-gray-700">
+            <h2 class="text-lg font-semibold mb-4">Participants</h2>
+            <div id="participants-list" class="space-y-2">
+              <!-- Participants will be added here -->
+            </div>
+          </div>
+
+          <!-- Chat Panel -->
+          <div class="flex-1 flex flex-col p-4">
+            <h2 class="text-lg font-semibold mb-4">Chat</h2>
+            <div id="chat-messages" class="flex-1 overflow-y-auto space-y-2 mb-4">
+              <!-- Chat messages will be added here -->
+            </div>
+            <div class="flex space-x-2">
+              <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-3 py-2 rounded bg-gray-700 text-white" />
+              <button onclick="sendMessage()" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="bg-gray-800 p-4 flex justify-center space-x-4">
+        <button onclick="toggleMic()" class="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-full flex items-center space-x-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+          </svg>
+          <span>Mic</span>
+        </button>
+        <button onclick="toggleCamera()" class="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-full flex items-center space-x-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
+          <span>Camera</span>
+        </button>
+      </div>
     </div>
   </body>
 </html>
