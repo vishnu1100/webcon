@@ -33,7 +33,7 @@
       <div class="flex-1 flex">
         <!-- Main Video Area -->
         <div class="flex-1 p-4">
-          <div id="video-container" class="grid grid-cols-1 gap-4 h-full">
+          <div id="video-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 p-2">
             <!-- Video cards will be added here -->
           </div>
         </div>
@@ -156,11 +156,13 @@ async function getMedia() {
 function displayVideo(stream, username, id = '') {
   const container = document.getElementById('video-container');
   const div = document.createElement('div');
-  div.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-lg p-2';
+  div.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-lg p-2 hover:shadow-xl hover:scale-[1.02] transition-all duration-200';
   div.id = `card-${id}`;
   div.innerHTML = `
-    <video id="video-${id}" autoplay ${id === '' ? 'muted' : ''} class="rounded w-full"></video>
-    <div class="text-center mt-2 text-sm">${username}</div>
+    <div class="aspect-video">
+      <video id="video-${id}" autoplay ${id === '' ? 'muted' : ''} class="rounded w-full h-full object-cover"></video>
+    </div>
+    <div class="text-center mt-1 text-xs truncate px-1">${username}</div>
   `;
   const video = div.querySelector('video');
   video.srcObject = stream;
