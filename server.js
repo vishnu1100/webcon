@@ -22,6 +22,7 @@ io.on('connection', (socket) => {
     // Room does not exist, create it
     socket.join(roomID);
     socket.username = username; // Store username on the socket
+    socket.hostID = socket.id; // Mark this user as the host
     socket.emit('room-created-success', roomID);
     socket.room = roomID;
   }
@@ -63,8 +64,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('leave-room', (roomID) => {
-    socket.to(roomID).emit('user-left', socket.id);
-    socket.leave(roomID);
+    if (socket.hostID === socket.id) {
+      // Host is leaving, end meeting for everyone
+      io.to(roomID).emit('host-ended-meeting', { hostUsername: socket.username });
+      // No need to emit user-left for each user, the host-ended-meeting will handle cleanup
+    } else {
+      // Regular user leaving
+      socket.to(roomID).emit('user-left', socket.id);
+      socket.leave(roomID);
+    }
   });
 
   socket.on('disconnect', () => {

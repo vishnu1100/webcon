@@ -239,9 +239,9 @@ function updateCurrentRoom(roomID) {
   updateParticipantsList();
 }
 
-function leaveRoom() {
-  // Show confirmation dialog
-  if (confirm("Are you sure you want to leave this meeting?")) {
+function leaveRoom(hostEnded = false) {
+  // Show confirmation dialog only if not triggered by host ending
+  if (hostEnded || confirm("Are you sure you want to leave this meeting?")) {
     // Cleanup peers
     Object.values(peers).forEach(peer => peer.destroy());
     peers = {};
@@ -254,7 +254,9 @@ function leaveRoom() {
     // Reset chat
     document.getElementById('chat-messages').innerHTML = '';
     
-    socket.emit('leave-room', currentRoom);
+    if (!hostEnded) {
+      socket.emit('leave-room', currentRoom);
+    }
     updateCurrentRoom('None');
     showConferenceInterface(false);
     document.getElementById('video-container').innerHTML = ''; // Clear videos
@@ -418,6 +420,12 @@ socket.on('user-left', (userID) => {
   if (div) div.remove();
   updateParticipantsList();
   addChatMessage('System', 'A participant has left the room');
+});
+
+// Handle host ending the meeting
+socket.on('host-ended-meeting', ({ hostUsername }) => {
+  showToast(`${hostUsername} has ended the meeting.`, 'info');
+  leaveRoom(true); // Trigger cleanup without emitting leave-room event
 });
 
 // Chat message handler
