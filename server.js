@@ -14,22 +14,36 @@ io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
   socket.on('create-room', ({ roomID, username }) => {
-  socket.join(roomID);
-  socket.username = username; // Store username on the socket
-  socket.emit('room-created', roomID);
-  socket.room = roomID;
+  const room = io.sockets.adapter.rooms.get(roomID);
+  if (room) {
+    // Room already exists
+    socket.emit('room-exists', roomID);
+  } else {
+    // Room does not exist, create it
+    socket.join(roomID);
+    socket.username = username; // Store username on the socket
+    socket.emit('room-created-success', roomID);
+    socket.room = roomID;
+  }
 });
 
   socket.on('join-room', ({ roomID, username }) => {
-  socket.join(roomID);
-  socket.username = username; // Store username on the socket
-  socket.room = roomID;
-  const users = [...io.sockets.adapter.rooms.get(roomID) || []]
-    .filter(id => id !== socket.id)
-    .map(id => ({ userID: id, username: io.sockets.sockets.get(id)?.username || 'Anonymous' })); // Get existing users with usernames
-  socket.emit('existing-users', users);
-  socket.to(roomID).emit('user-joined', { userID: socket.id, username: socket.username }); // Broadcast new user with username
-  socket.emit('room-joined', roomID);
+  const room = io.sockets.adapter.rooms.get(roomID);
+  if (room) {
+    // Room exists, join it
+    socket.join(roomID);
+    socket.username = username; // Store username on the socket
+    socket.room = roomID;
+    const users = [...room]
+      .filter(id => id !== socket.id)
+      .map(id => ({ userID: id, username: io.sockets.sockets.get(id)?.username || 'Anonymous' })); // Get existing users with usernames
+    socket.emit('existing-users', users);
+    socket.to(roomID).emit('user-joined', { userID: socket.id, username: socket.username }); // Broadcast new user with username
+    socket.emit('room-joined-success', roomID);
+  } else {
+    // Room does not exist
+    socket.emit('room-not-found', roomID);
+  }
 });
 
   socket.on('chat-message', ({ room, message }) => {

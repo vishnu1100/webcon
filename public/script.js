@@ -319,15 +319,58 @@ function toggleScreenShare() {
   alert("Screen sharing feature coming soon!");
 }
 
+// Toast Notification Function
+function showToast(message, type = 'info') {
+  let className = '';
+  switch (type) {
+    case 'success':
+      className = 'bg-green-500';
+      break;
+    case 'error':
+      className = 'bg-red-500';
+      break;
+    case 'info':
+    default:
+      className = 'bg-blue-500';
+      break;
+  }
+
+  Toastify({
+    text: message,
+    duration: 3000, // 3 seconds
+    close: true,
+    gravity: "top", // `top` or `bottom`
+    position: "right", // `left`, `center` or `right`
+    stopOnFocus: true, // Prevents dismissing on hover
+    style: {
+      background: className === 'bg-green-500' ? '#48bb78' : (className === 'bg-red-500' ? '#f56565' : '#4299e1'), // Use specific colors for success/error/info
+      padding: '12px',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    },
+    className: `text-white`,
+  }).showToast();
+}
+
 // Socket listeners
-socket.on('room-created', (roomID) => {
+socket.on('room-created-success', (roomID) => {
   updateCurrentRoom(roomID);
   addChatMessage('System', 'You created the room. Share the room ID with others to join.');
+  showToast(`Room '${roomID}' created successfully!`, 'success');
 });
 
-socket.on('room-joined', (roomID) => {
+socket.on('room-exists', (roomID) => {
+  showToast(`Room '${roomID}' already exists. Please try joining instead.`, 'error');
+});
+
+socket.on('room-joined-success', (roomID) => {
   updateCurrentRoom(roomID);
   addChatMessage('System', 'You joined the room.');
+  showToast(`Joined room '${roomID}' successfully!`, 'success');
+});
+
+socket.on('room-not-found', (roomID) => {
+  showToast(`Room '${roomID}' not found. Please check the ID or create a new room.`, 'error');
 });
 
 socket.on('user-joined', ({ userID, username }) => {
