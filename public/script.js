@@ -192,7 +192,7 @@ function displayVideo(stream, username, id = '') {
           </div>
           <span class="font-medium text-sm">${username}</span>
         </div>
-        <div class="flex space-x-2">
+        <div class="flex space-x-2 items-center">
           ${id === '' ? `
             <span class="bg-blue-500 text-xs px-2 py-1 rounded-full">You</span>
           ` : ''}
