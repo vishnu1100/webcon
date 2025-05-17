@@ -88,6 +88,14 @@
   transition: 0s;
 }
 
+.sidebar-transition {
+  transition: width 0.3s ease-in-out;
+}
+
+.video-container-transition {
+  transition: width 0.3s ease-in-out;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

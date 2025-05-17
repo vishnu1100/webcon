@@ -429,3 +429,83 @@ document.getElementById('roomInput').addEventListener('keypress', function(e) {
 
 // Start local video
 window.addEventListener("load", getMedia);
+
+// Sidebar and Panel Toggling
+const sidebar = document.getElementById('sidebar');
+const participantsPanel = document.getElementById('participants-panel');
+const chatPanel = document.getElementById('chat-panel');
+const participantsTab = document.getElementById('participants-tab');
+const chatTab = document.getElementById('chat-tab');
+const participantsToggleBtn = document.getElementById('participants-toggle-btn');
+let activePanel = 'participants';
+const videoContainer = document.getElementById('video-container');
+
+function toggleSidebar(show) {
+  if (show === undefined) {
+    sidebar.classList.toggle('hidden');
+  } else if (show) {
+    sidebar.classList.remove('hidden');
+  } else {
+    sidebar.classList.add('hidden');
+  }
+  adjustVideoContainer();
+}
+
+function showParticipantsPanel() {
+  participantsPanel.classList.remove('hidden');
+  chatPanel.classList.add('hidden');
+  participantsTab.classList.add('text-blue-400', 'border-b-2', 'border-blue-500');
+  participantsTab.classList.remove('text-gray-400');
+  chatTab.classList.add('text-gray-400');
+  chatTab.classList.remove('text-blue-400', 'border-b-2', 'border-blue-500');
+  chatTab.classList.remove('text-yellow-400', 'pulse'); // Remove highlight
+  activePanel = 'participants';
+}
+
+function showChatPanel() {
+  chatPanel.classList.remove('hidden');
+  participantsPanel.classList.add('hidden');
+  chatTab.classList.add('text-blue-400', 'border-b-2', 'border-blue-500');
+  chatTab.classList.remove('text-gray-400');
+  participantsTab.classList.add('text-gray-400');
+  participantsTab.classList.remove('text-blue-400', 'border-b-2', 'border-blue-500');
+  chatTab.classList.remove('text-yellow-400', 'pulse'); // Remove highlight
+  activePanel = 'chat';
+}
+
+// Adjust video container width based on sidebar visibility
+function adjustVideoContainer() {
+  if (sidebar.classList.contains('hidden')) {
+    videoContainer.style.width = '100%';
+  } else {
+    // Assuming sidebar width is fixed at w-80 (320px)
+    // This might need more dynamic calculation if sidebar width changes
+    videoContainer.style.width = 'calc(100% - 320px)';
+  }
+}
+
+// Event listeners for new toggle buttons
+participantsToggleBtn.addEventListener('click', () => {
+  if (sidebar.classList.contains('hidden')) {
+    toggleSidebar(true);
+    if (activePanel === 'chat') {
+      showChatPanel();
+    } else {
+      showParticipantsPanel();
+    }
+  } else {
+    toggleSidebar(false);
+  }
+});
+
+
+
+// Modify existing tab switching to use new functions
+participantsTab.removeEventListener('click', function() {}); // Remove old listener
+participantsTab.addEventListener('click', showParticipantsPanel);
+
+chatTab.removeEventListener('click', function() {}); // Remove old listener
+chatTab.addEventListener('click', showChatPanel);
+
+// Initial adjustment on load
+adjustVideoContainer();

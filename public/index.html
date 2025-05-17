@@ -64,13 +64,13 @@
       <div class="flex-1 flex overflow-hidden">
         <!-- Main Video Area -->
         <div class="flex-1 p-4 overflow-y-auto">
-          <div id="video-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 p-2">
+          <div id="video-container" class="video-container-transition grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 p-2">
             <!-- Video cards will be added here -->
           </div>
         </div>
 
         <!-- Sidebar -->
-        <div class="w-80 bg-gray-800 flex flex-col border-l border-gray-700 slide-up">
+        <div id="sidebar" class="sidebar-transition w-80 bg-gray-800 flex flex-col border-l border-gray-700 slide-up hidden">
           <!-- Tabs -->
           <div class="flex border-b border-gray-700">
             <button id="participants-tab" class="flex-1 py-3 px-4 text-blue-400 border-b-2 border-blue-500 font-medium">
@@ -126,6 +126,9 @@
         </button>
         <button id="settings-btn" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
           <i class="fas fa-cog text-xl"></i>
+        </button>
+        <button id="participants-toggle-btn" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
+          <i class="fas fa-users text-xl"></i>
         </button>
         <button id="more-btn" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
           <i class="fas fa-ellipsis-h text-xl"></i>
