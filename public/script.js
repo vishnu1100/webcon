@@ -563,17 +563,6 @@ function showChatPanel() {
   activePanel = 'chat';
 }
 
-// Adjust video container width based on sidebar visibility
-function adjustVideoContainer() {
-  if (sidebar.classList.contains('hidden')) {
-    videoContainer.style.width = '100%';
-  } else {
-    // Assuming sidebar width is fixed at w-80 (320px)
-    // This might need more dynamic calculation if sidebar width changes
-    videoContainer.style.width = 'calc(100% - 320px)';
-  }
-}
-
 // Event listeners for new toggle buttons
 participantsToggleBtn.addEventListener('click', () => {
   if (sidebar.classList.contains('hidden')) {
@@ -583,6 +572,7 @@ participantsToggleBtn.addEventListener('click', () => {
     } else {
       showParticipantsPanel();
     }
+
   } else {
     toggleSidebar(false);
   }
@@ -596,6 +586,3 @@ participantsTab.addEventListener('click', showParticipantsPanel);
 
 chatTab.removeEventListener('click', function() {}); // Remove old listener
 chatTab.addEventListener('click', showChatPanel);
-
-// Initial adjustment on load
-adjustVideoContainer();
