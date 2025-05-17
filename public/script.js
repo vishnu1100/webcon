@@ -130,7 +130,8 @@ function updateParticipantsList() {
   
   // Add remote users
   Object.keys(peers).forEach(userID => {
-    const initials = userID.slice(0, 1).toUpperCase();
+    const username = userMapping[userID] || `Participant ${userID.slice(0, 4)}`;
+    const initials = username.slice(0, 1).toUpperCase();
     const userDiv = document.createElement('div');
     userDiv.className = 'flex items-center justify-between p-2 hover:bg-gray-700 rounded-lg fade-in';
     userDiv.innerHTML = `
@@ -139,7 +140,7 @@ function updateParticipantsList() {
           ${initials}
         </div>
         <div>
-          <div class="font-medium">Participant ${userID.slice(0, 4)}</div>
+          <div class="font-medium">${username}</div>
           <div class="text-xs text-gray-400">Remote participant</div>
         </div>
       </div>
@@ -210,8 +211,9 @@ function displayVideo(stream, username, id = '') {
 // Room handling
 function createRoom() {
   const roomID = document.getElementById('roomInput').value.trim() || generateRoomId();
+  const username = document.getElementById('usernameInput').value.trim() || 'Anonymous';
   if (roomID) {
-    socket.emit('create-room', roomID);
+    socket.emit('create-room', { roomID, username });
   }
 }
 
@@ -221,8 +223,9 @@ function generateRoomId() {
 
 function joinRoom() {
   const roomID = document.getElementById('roomInput').value.trim();
+  const username = document.getElementById('usernameInput').value.trim() || 'Anonymous';
   if (roomID) {
-    socket.emit('join-room', roomID);
+    socket.emit('join-room', { roomID, username });
   }
 }
 
@@ -323,15 +326,18 @@ socket.on('room-joined', (roomID) => {
   addChatMessage('System', 'You joined the room.');
 });
 
-socket.on('user-joined', (userID) => {
-  userMapping[userID] = userID;
+socket.on('user-joined', ({ userID, username }) => {
+  userMapping[userID] = username;
   connectToPeer(userID, true);
   updateParticipantsList();
-  addChatMessage('System', 'A new participant has joined the room');
+  addChatMessage('System', `${username} has joined the room`);
 });
 
 socket.on('existing-users', (users) => {
-  users.forEach(userID => connectToPeer(userID, false));
+  users.forEach(({ userID, username }) => {
+    userMapping[userID] = username;
+    connectToPeer(userID, false);
+  });
 });
 
 socket.on('signal', ({ signalData, sourceID }) => {
@@ -403,7 +409,8 @@ function connectToPeer(targetID, initiator = false) {
   });
 
   peer.on('stream', stream => {
-    displayVideo(stream, `Participant ${targetID.slice(0, 4)}`, targetID);
+    const username = userMapping[targetID] || `Participant ${targetID.slice(0, 4)}`;
+    displayVideo(stream, username, targetID);
   });
 
   peers[targetID] = peer;

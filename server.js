@@ -13,24 +13,28 @@ app.use(express.static('public'));
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  socket.on('create-room', (roomID) => {
-    socket.join(roomID);
-    socket.emit('room-created', roomID);
-    socket.room = roomID;
-  });
+  socket.on('create-room', ({ roomID, username }) => {
+  socket.join(roomID);
+  socket.username = username; // Store username on the socket
+  socket.emit('room-created', roomID);
+  socket.room = roomID;
+});
 
-  socket.on('join-room', (roomID) => {
-    socket.join(roomID);
-    socket.room = roomID;
-    const users = [...io.sockets.adapter.rooms.get(roomID) || []].filter(id => id !== socket.id);
-    socket.emit('existing-users', users);
-    socket.to(roomID).emit('user-joined', socket.id);
-    socket.emit('room-joined', roomID);
-  });
+  socket.on('join-room', ({ roomID, username }) => {
+  socket.join(roomID);
+  socket.username = username; // Store username on the socket
+  socket.room = roomID;
+  const users = [...io.sockets.adapter.rooms.get(roomID) || []]
+    .filter(id => id !== socket.id)
+    .map(id => ({ userID: id, username: io.sockets.sockets.get(id)?.username || 'Anonymous' })); // Get existing users with usernames
+  socket.emit('existing-users', users);
+  socket.to(roomID).emit('user-joined', { userID: socket.id, username: socket.username }); // Broadcast new user with username
+  socket.emit('room-joined', roomID);
+});
 
   socket.on('chat-message', ({ room, message }) => {
-    socket.to(room).emit('chat-message', { sender: socket.id.slice(0, 4), message });
-  });
+  socket.to(room).emit('chat-message', { sender: socket.username || socket.id.slice(0, 4), message }); // Use username or ID snippet
+});
 
   socket.on('signal', ({ signalData, targetID }) => {
     io.to(targetID).emit('signal', { signalData, sourceID: socket.id });
