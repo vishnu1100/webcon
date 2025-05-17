@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modern Video Conference</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style src="styles.css" ></style>
+  </head>
+  <body class="bg-gray-900 text-white min-h-screen flex flex-col">
+    <!-- Landing Controls -->
+    <div id="landing-controls" class="flex flex-col items-center justify-center h-screen space-y-6 fade-in">
+      <div class="scale-in flex flex-col items-center mb-6">
+        <i class="fas fa-video text-blue-500 text-5xl mb-4"></i>
+        <h1 class="text-3xl font-bold">Modern Video Conference</h1>
+        <p class="text-gray-400 mt-2">Connect with anyone, anywhere</p>
+      </div>
+      
+      <div class="bg-gray-800 p-8 rounded-xl shadow-lg w-96 flex flex-col items-center space-y-6 scale-in">
+        <input id="roomInput" type="text" placeholder="Enter Room ID" class="px-4 py-3 rounded-lg bg-gray-700 border border-gray-600 w-full text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+        
+        <div class="flex space-x-4 w-full">
+          <button onclick="createRoom()" class="ripple btn-hover bg-blue-500 hover:bg-blue-600 flex-1 py-3 rounded-lg flex items-center justify-center space-x-2 transition-all shadow-lg">
+            <i class="fas fa-plus-circle"></i>
+            <span>Create Room</span>
+          </button>
+          <button onclick="joinRoom()" class="ripple btn-hover bg-green-500 hover:bg-green-600 flex-1 py-3 rounded-lg flex items-center justify-center space-x-2 transition-all shadow-lg">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Join Room</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Conference Interface -->
+    <div id="conference-interface" class="hidden h-screen flex flex-col">
+      <!-- Header -->
+      <header class="bg-gray-800 p-4 flex justify-between items-center shadow-lg border-b border-gray-700" style="height: 50px;" >
+        <div class="flex items-center space-x-3">
+          <i class="fas fa-video text-blue-500 text-xl"></i>
+          <div>
+            <!-- <h1 class="text-lg font-semibold">Meeting Room</h1> -->
+            <div class="text-sm text-gray-400 ">Room ID: <span id="currentRoom">None</span></div>
+          </div>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+          <div class="bg-gray-700 rounded-lg px-3 py-1 flex items-center">
+            <i class="fas fa-clock text-gray-400 mr-2"></i>
+            <span id="meeting-timer" class="text-gray-300">00:00:00</span>
+          </div>
+          <button onclick="leaveRoom()" class="ripple btn-hover bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg flex items-center space-x-2 transition-all">
+            <i class="fas fa-phone-slash"></i>
+            <span>End Call</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <div class="flex-1 flex overflow-hidden">
+        <!-- Main Video Area -->
+        <div class="flex-1 p-4 overflow-y-auto">
+          <div id="video-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 p-2">
+            <!-- Video cards will be added here -->
+          </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="w-80 bg-gray-800 flex flex-col border-l border-gray-700 slide-up">
+          <!-- Tabs -->
+          <div class="flex border-b border-gray-700">
+            <button id="participants-tab" class="flex-1 py-3 px-4 text-blue-400 border-b-2 border-blue-500 font-medium">
+              <i class="fas fa-users mr-2"></i>Participants
+            </button>
+            <button id="chat-tab" class="flex-1 py-3 px-4 text-gray-400 hover:text-gray-200 transition-colors">
+              <i class="fas fa-comments mr-2"></i>Chat
+            </button>
+          </div>
+          
+          <!-- Participants List -->
+          <div id="participants-panel" class="flex-1 p-4 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-semibold">Participants</h2>
+              <span id="participant-count" class="bg-blue-500 text-xs font-bold px-2 py-1 rounded-full">1</span>
+            </div>
+            <div id="participants-list" class="space-y-3">
+              <!-- Participants will be added here -->
+            </div>
+          </div>
+
+          <!-- Chat Panel -->
+          <div id="chat-panel" class="hidden flex-1 flex flex-col p-4">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-lg font-semibold">Meeting Chat</h2>
+              <button id="chat-options" class="text-gray-400 hover:text-white">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+            </div>
+            <div id="chat-messages" class="flex-1 overflow-y-auto space-y-3 mb-4 pr-2">
+              <!-- Chat messages will be added here -->
+            </div>
+            <div class="flex space-x-2 items-center">
+              <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 px-3 py-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all" />
+              <button onclick="sendMessage()" class="ripple btn-hover bg-blue-500 hover:bg-blue-600 p-2 rounded-lg transition-all">
+                <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="bg-gray-800 p-4 flex justify-center items-center space-x-4 border-t border-gray-700">
+        <button id="mic-btn" onclick="toggleMic()" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
+          <i class="fas fa-microphone text-xl"></i>
+        </button>
+        <button id="camera-btn" onclick="toggleCamera()" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
+          <i class="fas fa-video text-xl"></i>
+        </button>
+        <button id="screen-btn" onclick="toggleScreenShare()" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
+          <i class="fas fa-desktop text-xl"></i>
+        </button>
+        <button id="settings-btn" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
+          <i class="fas fa-cog text-xl"></i>
+        </button>
+        <button id="more-btn" class="ripple btn-hover bg-gray-700 hover:bg-gray-600 p-3 rounded-full transition-all">
+          <i class="fas fa-ellipsis-h text-xl"></i>
+        </button>
+      </div>
+    </div>
+
+  <script src="script.js"></script>
+  </body>
+</html>
