@@ -180,8 +180,11 @@ function displayVideo(stream, username, id = '') {
   const initials = username.slice(0, 1).toUpperCase();
   
   div.innerHTML = `
-    <div class="relative">
-      <video id="video-${id}" autoplay ${id === '' ? 'muted' : ''} class="w-full h-full object-cover aspect-video bg-gray-900"></video>
+    <div class="relative aspect-video">
+      <video id="video-${id}" autoplay ${id === '' ? 'muted' : ''} class="w-full h-full object-cover bg-gray-900"></video>
+      <div id="avatar-${id}" class="absolute inset-0 flex items-center justify-center bg-gray-900 text-gray-300 text-6xl font-bold hidden">
+        ${initials}
+      </div>
       <div class="absolute bottom-0 left-0 right-0 flex justify-between items-center p-3 bg-gradient-to-t from-black/80 to-transparent">
         <div class="flex items-center space-x-2">
           <div class="avatar w-8 h-8 ${randomColor} rounded-full flex items-center justify-center font-bold text-sm">
@@ -191,10 +194,10 @@ function displayVideo(stream, username, id = '') {
         </div>
         <div class="flex space-x-2">
           ${id === '' ? `
-           
+            <span class="bg-blue-500 text-xs px-2 py-1 rounded-full">You</span>
           ` : ''}
-        <i class="${micEnabled ? 'fas fa-microphone text-green-400' : 'fas fa-microphone-slash text-red-400'}"></i>
-      </div>
+          <i class="${micEnabled ? 'fas fa-microphone text-green-400' : 'fas fa-microphone-slash text-red-400'}"></i>
+        </div>
       </div>
     </div>
   `;
@@ -308,6 +311,19 @@ function toggleCamera() {
     cameraBtn.innerHTML = '<i class="fas fa-video-slash text-xl"></i>';
     cameraBtn.classList.remove('bg-gray-700');
     cameraBtn.classList.add('bg-red-500');
+  }
+
+  // Toggle video and avatar visibility for local user
+  const localVideo = document.getElementById('video-');
+  const localAvatar = document.getElementById('avatar-');
+  if (localVideo && localAvatar) {
+    if (cameraEnabled) {
+      localVideo.classList.remove('hidden');
+      localAvatar.classList.add('hidden');
+    } else {
+      localVideo.classList.add('hidden');
+      localAvatar.classList.remove('hidden');
+    }
   }
 
   // Emit camera state change to others
@@ -430,7 +446,20 @@ socket.on('mic-state-change', ({ userID, micEnabled }) => {
 socket.on('camera-state-change', ({ userID, cameraEnabled }) => {
   const videoCard = document.getElementById(`card-${userID}`);
   if (videoCard) {
+    const videoElement = videoCard.querySelector('video');
+    const avatarElement = videoCard.querySelector(`#avatar-${userID}`);
     const cameraIcon = videoCard.querySelector('.fa-video, .fa-video-slash');
+
+    if (videoElement && avatarElement) {
+      if (cameraEnabled) {
+        videoElement.classList.remove('hidden');
+        avatarElement.classList.add('hidden');
+      } else {
+        videoElement.classList.add('hidden');
+        avatarElement.classList.remove('hidden');
+      }
+    }
+
     if (cameraIcon) {
       if (cameraEnabled) {
         cameraIcon.classList.remove('fa-video-slash', 'text-red-400');
@@ -442,7 +471,6 @@ socket.on('camera-state-change', ({ userID, cameraEnabled }) => {
     }
   }
 });
-
 // Peer connection
 function connectToPeer(targetID, initiator = false) {
   const peer = new SimplePeer({
