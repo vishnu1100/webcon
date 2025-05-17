@@ -190,10 +190,10 @@ function displayVideo(stream, username, id = '') {
         </div>
         <div class="flex space-x-2">
           ${id === '' ? `
-            <span class="bg-blue-500 text-xs px-2 py-1 rounded-full">You</span>
+           
           ` : ''}
-          <i class="${id === '' ? micEnabled : 'true'} ? 'fas fa-microphone text-green-400' : 'fas fa-microphone-slash text-red-400'"></i>
-        </div>
+        <i class="${micEnabled ? 'fas fa-microphone text-green-400' : 'fas fa-microphone-slash text-red-400'}"></i>
+      </div>
       </div>
     </div>
   `;
@@ -267,6 +267,21 @@ function toggleMic() {
     micBtn.innerHTML = '<i class="fas fa-microphone-slash text-xl"></i>';
     micBtn.classList.remove('bg-gray-700');
     micBtn.classList.add('bg-red-500');
+  }
+
+  // Update mic icon on local video card
+  const localVideoCard = document.getElementById('card-');
+  if (localVideoCard) {
+    const micIcon = localVideoCard.querySelector('.fa-microphone, .fa-microphone-slash');
+    if (micIcon) {
+      if (micEnabled) {
+        micIcon.classList.remove('fa-microphone-slash', 'text-red-400');
+        micIcon.classList.add('fa-microphone', 'text-green-400');
+      } else {
+        micIcon.classList.remove('fa-microphone', 'text-green-400');
+        micIcon.classList.add('fa-microphone-slash', 'text-red-400');
+      }
+    }
   }
 }
 
