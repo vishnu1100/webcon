@@ -283,6 +283,9 @@ function toggleMic() {
       }
     }
   }
+
+  // Emit mic state change to others
+  socket.emit('mic-state-change', { room: currentRoom, micEnabled: micEnabled });
 }
 
 function toggleCamera() {
@@ -299,6 +302,9 @@ function toggleCamera() {
     cameraBtn.classList.remove('bg-gray-700');
     cameraBtn.classList.add('bg-red-500');
   }
+
+  // Emit camera state change to others
+  socket.emit('camera-state-change', { room: currentRoom, cameraEnabled: cameraEnabled });
 }
 
 // Screen sharing (placeholder - would need additional implementation)
@@ -348,6 +354,40 @@ socket.on('user-left', (userID) => {
 // Chat message handler
 socket.on('chat-message', ({ sender, message }) => {
   addChatMessage(sender, message);
+});
+
+// Handle mic state changes from other users
+socket.on('mic-state-change', ({ userID, micEnabled }) => {
+  const videoCard = document.getElementById(`card-${userID}`);
+  if (videoCard) {
+    const micIcon = videoCard.querySelector('.fa-microphone, .fa-microphone-slash');
+    if (micIcon) {
+      if (micEnabled) {
+        micIcon.classList.remove('fa-microphone-slash', 'text-red-400');
+        micIcon.classList.add('fa-microphone', 'text-green-400');
+      } else {
+        micIcon.classList.remove('fa-microphone', 'text-green-400');
+        micIcon.classList.add('fa-microphone-slash', 'text-red-400');
+      }
+    }
+  }
+});
+
+// Handle camera state changes from other users
+socket.on('camera-state-change', ({ userID, cameraEnabled }) => {
+  const videoCard = document.getElementById(`card-${userID}`);
+  if (videoCard) {
+    const cameraIcon = videoCard.querySelector('.fa-video, .fa-video-slash');
+    if (cameraIcon) {
+      if (cameraEnabled) {
+        cameraIcon.classList.remove('fa-video-slash', 'text-red-400');
+        cameraIcon.classList.add('fa-video', 'text-green-400');
+      } else {
+        cameraIcon.classList.remove('fa-video', 'text-green-400');
+        cameraIcon.classList.add('fa-video-slash', 'text-red-400');
+      }
+    }
+  }
 });
 
 // Peer connection

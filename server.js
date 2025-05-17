@@ -36,8 +36,17 @@ io.on('connection', (socket) => {
     io.to(targetID).emit('signal', { signalData, sourceID: socket.id });
   });
 
-  socket.on('cameraToggle', (data) => {
-    socket.broadcast.emit('userCameraStatus', data);
+  socket.on('mic-state-change', ({ room, micEnabled }) => {
+    socket.to(room).emit('mic-state-change', { userID: socket.id, micEnabled });
+  });
+
+  socket.on('camera-state-change', ({ room, cameraEnabled }) => {
+    socket.to(room).emit('camera-state-change', { userID: socket.id, cameraEnabled });
+  });
+
+  socket.on('leave-room', (roomID) => {
+    socket.to(roomID).emit('user-left', socket.id);
+    socket.leave(roomID);
   });
 
   socket.on('disconnect', () => {
