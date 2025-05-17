@@ -253,6 +253,10 @@ function leaveRoom() {
     
     socket.emit('leave-room', currentRoom);
     updateCurrentRoom('None');
+    showConferenceInterface(false);
+    document.getElementById('video-container').innerHTML = ''; // Clear videos
+    stopTimer();
+    location.reload(); // Add this line to refresh the page
   }
 }
 
